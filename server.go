@@ -1,12 +1,22 @@
 package main
 
 import (
+	"os"
+	"time"
+	"strconv"
 	"net/http"
+	b64 "encoding/base64"
+
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"./models"
+)
+
+const (
+	SERVERNAME="localhost:1323"
 )
 
 var (
@@ -62,7 +72,7 @@ func updateUser(c echo.Context) error {
 			return c.JSON(http.StatusOK, "update user completed")
 		}
 	}
-	return c.JSON(http.StatusBadRequest, "can not up to date user") 
+	return c.JSON(http.StatusBadRequest, "can not up to date user")
 }
 
 func deleteUser(c echo.Context) error {
@@ -75,6 +85,29 @@ func deleteUser(c echo.Context) error {
 	return c.JSON(http.StatusBadRequest, "not found user or can not to delete")
 }
 
+func uploadImage(c echo.Context) error {
+	image := new(models.Image)
+	image.Id = bson.NewObjectId()
+	image.Name =  strconv.FormatInt(time.Now().UTC().UnixNano(),10)
+	println(image.Name)
+	if err := c.Bind(image); err != nil {
+		return c.JSON(http.StatusBadRequest, "please check image input")
+	}
+	sDec, _ := b64.StdEncoding.DecodeString(image.Base64String)
+	file, err := os.Create("./images/"+image.Name+".png")
+	if err != nil {
+		panic("please check images path")
+	}
+	defer file.Close()
+	_, err = file.Write(sDec)
+	if err != nil {
+		panic(err)
+	}
+    result := new(models.Image)
+	result.Url = "http://"+ SERVERNAME+ "/images/"+ image.Name + ".png"
+	return c.JSON(http.StatusOK, result)
+}
+
 func init() {
 	mongoSession = getSession()
 	mongoSession.SetMode(mgo.Monotonic, true)
@@ -82,6 +115,14 @@ func init() {
 
 func main() {
 	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
+	}))
+
 
 	e.Static("/images", "images")
 
@@ -90,6 +131,7 @@ func main() {
 	e.GET("/users/:id", getUserByID)
 	e.PUT("/users/:id", updateUser)
 	e.DELETE("/users/:id", deleteUser)
+	e.POST("/upload/images", uploadImage)
 
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(SERVERNAME))
 }
