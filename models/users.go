@@ -14,11 +14,12 @@ type (
 		Firstname	string	`json:"firstname,omitempty" bson:"firstname,omitempty"`
 		Lastname	string `json:"lastname,omitempty" bson:"lastname,omitempty"`
 		Password	string	`json:"password,omitempty" bson:"password,omitempty"`
+		Image	string	`json:"image,omitempty" bson:"image,omitempty"`
 	}
 )
 
 func (u *User)IsNotDuplicate() bool {
-	err := helper.MongoCollection.Find(bson.M{"username": u.Username}).One(u)
+	err := helper.UsersCollection.Find(bson.M{"username": u.Username}).One(u)
 	if err != nil {
 		return true
 	}
@@ -26,7 +27,7 @@ func (u *User)IsNotDuplicate() bool {
 }
 
 func (u *User)SaveUserToDB() error {
-	err := helper.MongoCollection.Insert(&u)
+	err := helper.UsersCollection.Insert(&u)
 	if err != nil {
 		return err
 	}
@@ -35,7 +36,7 @@ func (u *User)SaveUserToDB() error {
 
 func (u *User)ReadUsersFromDB() ([]User , error ){
 	result := []User{}
-	err := helper.MongoCollection.Find(nil).All(&result)
+	err := helper.UsersCollection.Find(nil).All(&result)
 	if err != nil {
 		return nil,err
 	}
@@ -43,7 +44,7 @@ func (u *User)ReadUsersFromDB() ([]User , error ){
 }
 
 func (u *User)ReadUsersByIDFromDB() (*User, error) {
-	err := helper.MongoCollection.Find(bson.M{"_id": u.Id}).One(&u)
+	err := helper.UsersCollection.Find(bson.M{"_id": u.Id}).One(&u)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,7 @@ func (u *User)ReadUsersByIDFromDB() (*User, error) {
 }
 
 func (u *User)UpdateUserToDB() bool{
-	err := helper.MongoCollection.UpdateId(u.Id,u)
+	err := helper.UsersCollection.UpdateId(u.Id,u)
 	if err != nil {
 		return false
 	}
@@ -59,7 +60,7 @@ func (u *User)UpdateUserToDB() bool{
 }
 
 func (u *User)DeleteUserByIDFromDB() bool {
-	err := helper.MongoCollection.RemoveId(u.Id)
+	err := helper.UsersCollection.RemoveId(u.Id)
 	if err != nil {
 		return false
 	}

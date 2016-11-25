@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"time"
 	"strconv"
@@ -17,7 +18,8 @@ import (
 )
 
 const (
-	SERVERNAME="localhost:1323"
+	SERVERNAME="128.199.130.61:1323"
+	//SERVERNAME="localhost:1323"
 )
 
 func getSession() *mgo.Session {
@@ -63,6 +65,7 @@ func updateUser(c echo.Context) error {
 	if err := c.Bind(user); err != nil {
 		return c.JSON(http.StatusBadRequest, "please check input")
 	}
+	fmt.Printf("%#v",user)
 	if user.IsNotDuplicate() {
 		if user.UpdateUserToDB() {
 			return c.JSON(http.StatusOK, "update user completed")
@@ -85,7 +88,6 @@ func uploadImage(c echo.Context) error {
 	image := new(models.Image)
 	image.Id = bson.NewObjectId()
 	image.Name =  strconv.FormatInt(time.Now().UTC().UnixNano(),10)
-	println(image.Name)
 	if err := c.Bind(image); err != nil {
 		return c.JSON(http.StatusBadRequest, "please check image input")
 	}
@@ -108,7 +110,7 @@ func init() {
 	mongoSession := getSession()
 	mongoSession.SetMode(mgo.Monotonic, true)
 	helper.MongoSession = mongoSession
-	helper.MongoCollection = mongoSession.DB("mdb").C("users")
+	helper.UsersCollection = mongoSession.DB("mdb").C("users")
 }
 
 func main() {
