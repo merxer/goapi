@@ -1,8 +1,10 @@
 package models
 
 import (
-	"gopkg.in/mgo.v2"
+	_ "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+
+	"../helper"
 )
 
 type (
@@ -15,49 +17,49 @@ type (
 	}
 )
 
-func (u *User)IsNotDuplicate(mongoSession *mgo.Session) bool {
-	err := mongoSession.DB("mdb").C("users").Find(bson.M{"username": u.Username}).One(u)
+func (u *User)IsNotDuplicate() bool {
+	err := helper.MongoCollection.Find(bson.M{"username": u.Username}).One(u)
 	if err != nil {
 		return true
 	}
 	return false
 }
 
-func (u *User)SaveUserToDB(mongoSession *mgo.Session) error {
-	err := mongoSession.DB("mdb").C("users").Insert(&u)
+func (u *User)SaveUserToDB() error {
+	err := helper.MongoCollection.Insert(&u)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *User)ReadUsersFromDB(mongoSession *mgo.Session) ([]User , error ){
+func (u *User)ReadUsersFromDB() ([]User , error ){
 	result := []User{}
-	err := mongoSession.DB("mdb").C("users").Find(nil).All(&result)
+	err := helper.MongoCollection.Find(nil).All(&result)
 	if err != nil {
 		return nil,err
 	}
 	return result, nil
 }
 
-func (u *User)ReadUsersByIDFromDB(mongoSession *mgo.Session) (*User, error) {
-	err := mongoSession.DB("mdb").C("users").Find(bson.M{"_id": u.Id}).One(&u)
+func (u *User)ReadUsersByIDFromDB() (*User, error) {
+	err := helper.MongoCollection.Find(bson.M{"_id": u.Id}).One(&u)
 	if err != nil {
 		return nil, err
 	}
 	return u, nil
 }
 
-func (u *User)UpdateUserToDB(mongoSession *mgo.Session) bool{
-	err := mongoSession.DB("mdb").C("users").UpdateId(u.Id,u)
+func (u *User)UpdateUserToDB() bool{
+	err := helper.MongoCollection.UpdateId(u.Id,u)
 	if err != nil {
 		return false
 	}
 	return true
 }
 
-func (u *User)DeleteUserByIDFromDB(mongoSession *mgo.Session) bool {
-	err := mongoSession.DB("mdb").C("users").RemoveId(u.Id)
+func (u *User)DeleteUserByIDFromDB() bool {
+	err := helper.MongoCollection.RemoveId(u.Id)
 	if err != nil {
 		return false
 	}

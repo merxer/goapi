@@ -13,16 +13,12 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"./models"
+	"./helper"
 )
 
 const (
 	SERVERNAME="localhost:1323"
 )
-
-var (
-	mongoSession *mgo.Session
-)
-
 
 func getSession() *mgo.Session {
 	session, err := mgo.Dial("mongodb://localhost")
@@ -38,8 +34,8 @@ func saveUser(c echo.Context) error{
 	if err := c.Bind(user); err != nil {
 		return c.JSON(http.StatusBadRequest, "please check input")
 	}
-	if user.IsNotDuplicate(mongoSession) && !(user.Username == "") {
-		user.SaveUserToDB(mongoSession)
+	if user.IsNotDuplicate() && !(user.Username == "") {
+		user.SaveUserToDB()
 		return c.JSON(http.StatusCreated, "create user success")
 	}
 	return c.JSON(http.StatusConflict, "user empty or duplicate")
@@ -48,7 +44,7 @@ func saveUser(c echo.Context) error{
 func getUser(c echo.Context) error {
 	user := models.User{}
 	results := []models.User{}
-	results, _ = user.ReadUsersFromDB(mongoSession)
+	results, _ = user.ReadUsersFromDB()
 	return c.JSON(http.StatusOK, results)
 }
 
@@ -56,7 +52,7 @@ func getUserByID(c echo.Context) error {
 	user := models.User{}
 	id := c.Param("id")
 	user.Id = bson.ObjectIdHex(id)
-	results, _ := user.ReadUsersByIDFromDB(mongoSession)
+	results, _ := user.ReadUsersByIDFromDB()
 	return c.JSON(http.StatusOK, results)
 }
 
@@ -67,8 +63,8 @@ func updateUser(c echo.Context) error {
 	if err := c.Bind(user); err != nil {
 		return c.JSON(http.StatusBadRequest, "please check input")
 	}
-	if user.IsNotDuplicate(mongoSession) {
-		if user.UpdateUserToDB(mongoSession) {
+	if user.IsNotDuplicate() {
+		if user.UpdateUserToDB() {
 			return c.JSON(http.StatusOK, "update user completed")
 		}
 	}
@@ -79,7 +75,7 @@ func deleteUser(c echo.Context) error {
 	user := models.User{}
 	id := c.Param("id")
 	user.Id = bson.ObjectIdHex(id)
-	if user.DeleteUserByIDFromDB(mongoSession) {
+	if user.DeleteUserByIDFromDB() {
 		return c.JSON(http.StatusOK, "delete user completed")
 	}
 	return c.JSON(http.StatusBadRequest, "not found user or can not to delete")
@@ -109,11 +105,15 @@ func uploadImage(c echo.Context) error {
 }
 
 func init() {
-	mongoSession = getSession()
+	mongoSession := getSession()
 	mongoSession.SetMode(mgo.Monotonic, true)
+	helper.MongoSession = mongoSession
+	helper.MongoCollection = mongoSession.DB("mdb").C("users")
 }
 
 func main() {
+	defer helper.MongoSession.Close()
+
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
