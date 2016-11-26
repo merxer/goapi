@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	SERVERNAME="128.199.130.61:1323"
+	SERVERNAME="128.199.130.61:80"
 	//SERVERNAME="localhost:1323"
 )
 
@@ -106,6 +106,19 @@ func uploadImage(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
+func login(c echo.Context) error {
+	user := new(models.User)
+	if err := c.Bind(user); err != nil {
+		return c.JSON(http.StatusBadRequest, "please check input")
+	}
+
+	result, err  := user.CheckLogin()
+	if err != nil {
+		return echo.ErrUnauthorized
+	}
+	return c.JSON(http.StatusOK, result)
+}
+
 func init() {
 	mongoSession := getSession()
 	mongoSession.SetMode(mgo.Monotonic, true)
@@ -134,6 +147,7 @@ func main() {
 	e.PUT("/users/:id", updateUser)
 	e.DELETE("/users/:id", deleteUser)
 	e.POST("/upload/images", uploadImage)
+	e.POST("/login", login)
 
 	e.Logger.Fatal(e.Start(SERVERNAME))
 }
