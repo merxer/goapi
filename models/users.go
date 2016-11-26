@@ -9,7 +9,7 @@ import (
 
 type (
 	User struct {
-		Id	bson.ObjectId	`json:"id" bson:"_id,omitempty"`
+		Id	bson.ObjectId	`json:"id,omitempty" bson:"_id,omitempty"`
 		Username	string	`json:"username,omitempty" bson:"username,omitempty"`
 		Firstname	string	`json:"firstname,omitempty" bson:"firstname,omitempty"`
 		Lastname	string `json:"lastname,omitempty" bson:"lastname,omitempty"`
@@ -24,6 +24,14 @@ func (u *User)IsNotDuplicate() bool {
 		return true
 	}
 	return false
+}
+
+func (u *User)CheckLogin() (*User,error){
+	err := helper.UsersCollection.Find(bson.M{"username": u.Username,"password": u.Password}).One(&u)
+	if err != nil {
+		return nil, err 
+	}
+	return u,nil
 }
 
 func (u *User)SaveUserToDB() error {
