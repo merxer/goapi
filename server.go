@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	SERVERNAME="128.199.130.61:80"
-	//SERVERNAME="localhost:1323"
+//	SERVERNAME="128.199.130.61:80"
+	SERVERNAME="localhost:1323"
 )
 
 func getSession() *mgo.Session {
@@ -147,7 +147,7 @@ func main() {
 	e.PUT("/users/:id", updateUser)
 	e.DELETE("/users/:id", deleteUser)
 	e.POST("/upload/images", uploadImage)
-	e.POST("/login", login)
+	//e.POST("/login", login)
 
 	e.Logger.Fatal(e.Start(SERVERNAME))
 }
